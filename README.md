@@ -65,6 +65,7 @@ python extract.py --tumor_bam --normal_bam --fasta --bed --sample_name --RP_dir 
 ### CNV callset validation
 
 For a CNV callset produced by an external method, users can directly apply the validator command to assess its reliability using the trained model.
+We provide a pre-trained model in the model directory, which can be applied to the evaluation of external CNV callsets.
 
 ```python
 feature extraction parameters

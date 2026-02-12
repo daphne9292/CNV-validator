@@ -15,11 +15,11 @@ def parse_cigar(cigar_str):
     Parameters:
     cigar_str (str): The CIGAR string to parse.
     """
-    # 使用正则表达式拆分CIGAR字符串
+   
     cigar_pattern = re.compile(r'(\d+)([MIDNSHP=X])')
     cigar_operations = cigar_pattern.findall(cigar_str)
 
-    # 打印拆分后的CIGAR操作
+    
     # for length, operation in cigar_operations:
     #     print(f"Length: {length}, Operation: {operation}")
     return cigar_operations
@@ -75,7 +75,7 @@ def fetch_reads_nineth(bam_file, chrom, start, end,type,mean_insert_size = 500,s
     valid_SR_num_left_bp_interval = 0
     valid_SR_num_right_bp_interval = 0
     k = 0
-    #在左右断点expand_size范围内找寻异常RP、SR信号
+    
     # methods callset
     left = max(start - window_size,0)
     for read in bam.fetch(chrom, left, start + window_size):
@@ -199,7 +199,7 @@ def fetch_snp_nineth(fasta,chrom, start, end,snp_vcf,normal_bam_dir,tumor_bam_di
                   'chr18': 18, 'chr19': 19, 'chr20': 20, 'chr21': 21, 'chr22': 22, 'chrX': 23, 'chrY': 24}
     chrom2index = chrom_dict[chrom] - 1
     chrom_length = read_fa.lengths[chrom2index]
-    #根据区间尺寸左右外扩expand_size
+    #expand_size
     svlen = end - start
     if svlen < 10000:
         expand_size = 3000
@@ -210,7 +210,7 @@ def fetch_snp_nineth(fasta,chrom, start, end,snp_vcf,normal_bam_dir,tumor_bam_di
     left = max(1,start - expand_size)
     right = min(chrom_length,end + expand_size)
 
-    # 文件太大，根据区间坐标猜测一个位置实现文件快速读取
+    
     total_line = wc_count(snp_vcf)
     # line_offset = 2
     line_offset = math.ceil(left / chrom_length * total_line)
@@ -353,7 +353,6 @@ def chunker_depth_BAF_nineth(list,depth_BAF_out_dir,normal_bam_dir,tumor_bam_dir
                   n_BAF_diff_of_leftside_with_interval, n_BAF_diff_of_rightside_with_interval, file=fout)
 def PR_SR_nineth(benchmark_bed,RP_SR_dir,normal_bam,tumor_bam,mean_insert_size,std_insert_size,thread_num=1,sample_name='s'):
     bed_list = []
-    # bed需要四列，最后一列是类型‘DUP’或‘DEL'
     with open(benchmark_bed, 'r') as fin:
         for line in fin:
             info = line.strip().split()
@@ -400,7 +399,7 @@ def depth_BAF_nineth(benchmark_bed,depth_BAF_dir,normal_bam_dir,tumor_bam_dir,fa
                     type = info[3]
 
                 proof = depth_BAF_dir + sample_name + '_' + info[0] + '_' + info[1] + '_' + info[2] + '_' + type + '.proof.txt'
-                if svlen > 1000 and not os.path.exists(proof):
+                if svlen > 1000:
                     bed_list.append([info[0], info[1], info[2], type])
 
     print(len(bed_list))
@@ -485,7 +484,6 @@ def statisticproof(RP_SR_proof_dir,depth_BAF_proof_dir, out_statistic_csv):
                     t_valid_RP_num_right_bp_interval = int(info[9])
                     t_valid_SR_num_left_bp_interval = int(info[10])
                     t_valid_SR_num_right_bp_interval = int(info[11])
-            # 将RP\SR证据转换为一些绝对数值和异常reads百分比的特征
             valid_n_RP_percent_left_bp_interval.append(n_valid_RP_num_left_bp_interval/n_total_read_num_left_bp_interval \
                                                          if n_total_read_num_left_bp_interval > 0 else np.nan)
             valid_n_SR_percent_left_bp_interval.append(n_valid_SR_num_left_bp_interval/n_total_read_num_left_bp_interval \
@@ -541,7 +539,7 @@ def statisticproof(RP_SR_proof_dir,depth_BAF_proof_dir, out_statistic_csv):
     RP_SR_depth_BAF_statistic_df['valid_t_SR_percent_right_bp_interval'] = valid_t_SR_percent_right_bp_interval
     RP_SR_depth_BAF_statistic_df['valid_n_SR_percent_left_bp_interval'] = valid_n_SR_percent_left_bp_interval
     RP_SR_depth_BAF_statistic_df['valid_n_SR_percent_right_bp_interval'] = valid_n_SR_percent_right_bp_interval
-    print(RP_SR_depth_BAF_statistic_df.shape)
+    # print(RP_SR_depth_BAF_statistic_df.shape)
     RP_SR_depth_BAF_statistic_df.to_csv(out_statistic_csv, index=False)
 
 def generate_proof(tumor,normal,ref,bed,sample_name,RP_dir,RD_dir,mean_insert_size,std_insert_size,snp_vcf_prefix,thread,out_statistic_csv):

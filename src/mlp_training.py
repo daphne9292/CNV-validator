@@ -7,7 +7,7 @@ from sklearn.model_selection import train_test_split
 import pandas as pd
 from sklearn.preprocessing import RobustScaler
 
-# 定义模型
+
 class SimpleModel(nn.Module):
     def __init__(self, input_size):
         super(SimpleModel, self).__init__()
@@ -25,19 +25,17 @@ class SimpleModel(nn.Module):
         x = self.fc3(x)
         return self.sigmoid(x)
 
-# 训练函数
+
 def train(model, X_train_val, y_train_val, optimizer, num_epochs=100,val_size=0.2,best_metric='f1'):
-    best_f1 = 0.0  # 初始化最佳F1分数（或选择其他指标）
+    best_f1 = 0.0  
     best_model_state = None  #
-    label_counts = y_train_val.sum(dim=0)  # 每个标签为1的数量
+    label_counts = y_train_val.sum(dim=0)  
     # print("label_counts: ", label_counts)
     total = y_train_val.shape[0]
-    # 模拟数据训练时用pos_weight
-    # pos_weight = (total - label_counts) / (label_counts + 1e-6)  # 防止除0
+    # pos_weight = (total - label_counts) / (label_counts + 1e-6) 
     # pos_weight = pos_weight.to(device)
     for epoch in range(num_epochs):
         model.train()
-        # 随机划分训练集和验证集
         train_indices = np.random.choice(len(X_train_val), size=int(len(X_train_val) * (1 - val_size)), replace=False)
         val_indices = np.setdiff1d(np.arange(len(X_train_val)), train_indices)
 
@@ -45,22 +43,19 @@ def train(model, X_train_val, y_train_val, optimizer, num_epochs=100,val_size=0.
 
         X_val, y_val = X_train_val[val_indices], y_train_val[val_indices]
 
-        # 正向传播
+    
         optimizer.zero_grad()
         outputs = model(X_train).squeeze()
-
-        # sim_data_training 定义带 pos_weight 的损失函数
+      
         # criterion = torch.nn.BCEWithLogitsLoss(pos_weight=pos_weight)
         criterion = torch.nn.BCEWithLogitsLoss()
         loss = criterion(outputs, y_train)
         # loss = nn.BCELoss()(outputs, y_train)
         # loss = cross_entropy_loss(outputs, y_train)
 
-        # 反向传播
         loss.backward()
         optimizer.step()
 
-        # 验证集评估
         model.eval()
         with torch.no_grad():
             val_outputs = model(X_val).squeeze()
@@ -79,16 +74,14 @@ def train(model, X_train_val, y_train_val, optimizer, num_epochs=100,val_size=0.
             roc_auc[i] = auc(fpr[i], tpr[i])
             print(f'Lable [{i}], AUC: {roc_auc[i]:.4f}')
 
-        # 更新最佳模型状态
         if best_metric == 'f1' and f1 > best_f1:
             best_f1 = f1
             best_model_state = model.state_dict()
 
-        # 加载最佳模型状态
     if best_model_state is not None:
         model.load_state_dict(best_model_state)
 
-    return model  # 返回最佳模型
+    return model  
 def training_dataset_split():
     train_sample=[]
     train_labels=[]
@@ -111,9 +104,9 @@ def training_dataset_split():
         sim_df_C = sim_df_mix[sim_df_mix['left_label'] == 1]
         sim_df_D = sim_df_mix[sim_df_mix['right_label'] == 1]
 
-        sim_df_B.fillna(0, inplace=True)  # 用0填充缺失值
-        sim_df_C.fillna(0, inplace=True)  # 用0填充缺失值
-        sim_df_D.fillna(0, inplace=True)  # 用0填充缺失值
+        sim_df_B.fillna(0, inplace=True)  
+        sim_df_C.fillna(0, inplace=True)  
+        sim_df_D.fillna(0, inplace=True) 
         # select some feature for training
         s_df_B = sim_df_B.drop(['svtype', 'report_len','valid_t_SR_percent_left_bp_interval','valid_t_SR_percent_right_bp_interval','valid_n_SR_percent_left_bp_interval','valid_n_SR_percent_right_bp_interval'], axis=1)
         s_df_C = sim_df_C.drop(['svtype', 'left_label', 'right_label', 'report_len','valid_t_SR_percent_left_bp_interval','valid_t_SR_percent_right_bp_interval','valid_n_SR_percent_left_bp_interval','valid_n_SR_percent_right_bp_interval'], axis=1)
@@ -137,7 +130,7 @@ def training_dataset_split():
     sim_df_A = pd.read_csv(
         '/data/home/gyzhe/project/validateCNVBeakpoint/sim/two.abnormal.size/random_interval_proof/RP_SR_depth_BAF_proofStatistic.csv',
         index_col=0)
-    sim_df_A.fillna(0, inplace=True)  # 用0填充缺失值
+    sim_df_A.fillna(0, inplace=True)  
     # select some feature for training
     s_df_A = sim_df_A.drop(['svtype', 'report_len', 'valid_t_SR_percent_left_bp_interval', 'valid_t_SR_percent_right_bp_interval',
          'valid_n_SR_percent_left_bp_interval', 'valid_n_SR_percent_right_bp_interval'], axis=1)
@@ -155,7 +148,7 @@ def training_dataset_split():
     cnvkit_negative = pd.read_csv(
         '/data/home/gyzhe/project/validateCNVBeakpoint/data/ChineseQuartet/analysis/methods.call.cnv/cnvkit/LCL5normal/proof/RP_SR_depth_BAF_proofStatistic.csv',
         index_col=0)
-    cnvkit_negative.fillna(0, inplace=True)  # 用0填充缺失值
+    cnvkit_negative.fillna(0, inplace=True)
     neg_df = cnvkit_negative.drop(
         ['svtype', 'report_len', 'valid_t_SR_percent_left_bp_interval', 'valid_t_SR_percent_right_bp_interval',
          'valid_n_SR_percent_left_bp_interval', 'valid_n_SR_percent_right_bp_interval'], axis=1)
@@ -186,7 +179,7 @@ def training_dataset_split():
     facets_negative = pd.read_csv(
         '/data/home/gyzhe/project/validateCNVBeakpoint/data/ChineseQuartet/analysis/methods.call.cnv/facets/LCL5normal/proof/RP_SR_depth_BAF_proofStatistic.csv',
         index_col=0)
-    facets_negative.fillna(0, inplace=True)  # 用0填充缺失值
+    facets_negative.fillna(0, inplace=True) 
     neg_df = facets_negative.drop(['svtype', 'report_len', 'valid_t_SR_percent_left_bp_interval', 'valid_t_SR_percent_right_bp_interval',
          'valid_n_SR_percent_left_bp_interval', 'valid_n_SR_percent_right_bp_interval'], axis=1)
     neg_features = neg_df.to_numpy()
@@ -201,7 +194,7 @@ def training_dataset_split():
     sequenza_negative = pd.read_csv(
         '/data/home/gyzhe/project/validateCNVBeakpoint/data/ChineseQuartet/analysis/methods.call.cnv/sequenza/LCL5normal/proof/RP_SR_depth_BAF_proofStatistic.csv',
         index_col=0)
-    sequenza_negative.fillna(0, inplace=True)  # 用0填充缺失值
+    sequenza_negative.fillna(0, inplace=True) 
     neg_df = sequenza_negative.drop(['svtype', 'report_len', 'valid_t_SR_percent_left_bp_interval', 'valid_t_SR_percent_right_bp_interval',
          'valid_n_SR_percent_left_bp_interval', 'valid_n_SR_percent_right_bp_interval'], axis=1)
     neg_features = neg_df.to_numpy()
@@ -220,7 +213,7 @@ def training_dataset_split():
     df_B = pd.read_csv(
         '/data/home/gyzhe/project/validateCNVBeakpoint/output.hcc1395/two.abnormal.size/proof_tgs_bench/tgs_bench_RP_SR_depth_BAF_proofStatistic.csv',
         index_col=0)
-    df_B.fillna(0, inplace=True)  # 用0填充缺失值
+    df_B.fillna(0, inplace=True) 
     # negative sample,shifted breakpoint of HCC1395 benchmark,label[0,0,1] [0,1,0]
     df_mix = pd.read_csv(
         '/data/home/gyzhe/project/validateCNVBeakpoint/output.hcc1395/two.abnormal.size/one_bp_precise_interval/one_bp_precise_interval_RP_SR_depth_BAF_proofStatistic.csv',
@@ -228,8 +221,8 @@ def training_dataset_split():
 
     df_C = df_mix[df_mix['left_label'] == 1]
     df_D = df_mix[df_mix['right_label'] == 1]
-    df_C.fillna(0, inplace=True)  # 用0填充缺失值
-    df_D.fillna(0, inplace=True)  # 用0填充缺失值
+    df_C.fillna(0, inplace=True)  
+    df_D.fillna(0, inplace=True)  
 
     s_df_B = df_B.drop(['svtype', 'report_len', 'valid_t_SR_percent_left_bp_interval', 'valid_t_SR_percent_right_bp_interval',
          'valid_n_SR_percent_left_bp_interval', 'valid_n_SR_percent_right_bp_interval'], axis=1)
@@ -264,9 +257,9 @@ def training_dataset_split():
             index_col=0)
         test_C = test_mix[test_mix['left_label'] == 1]
         test_D = test_mix[test_mix['right_label'] == 1]
-        test_B.fillna(0, inplace=True)  # 用0填充缺失值
-        test_C.fillna(0, inplace=True)  # 用0填充缺失值
-        test_D.fillna(0, inplace=True)  # 用0填充缺失值
+        test_B.fillna(0, inplace=True)  
+        test_C.fillna(0, inplace=True)  
+        test_D.fillna(0, inplace=True)  
 
         t_df_B = test_B.drop(
             ['svtype', 'report_len', 'valid_t_SR_percent_left_bp_interval', 'valid_t_SR_percent_right_bp_interval',
@@ -346,7 +339,7 @@ def model_train(device):
     print(f'Test Set Precision: {precision:.4f}')
     print(f'Test Set F1: {f1:.4f}')
 
-    # 绘制每个标签的ROC曲线
+    
     # plt.figure()
     # for i in range(n_labels):
     #     plt.plot(fpr[i], tpr[i], label='ROC curve of label {0} (area = {1:0.2f})'
@@ -363,7 +356,6 @@ def model_train(device):
 def model_val(device,model_dir,independent_CNV_callset_feature,output_csv):
     X_train_val,y_train_val,X_test,y_test = training_dataset_split()
 
-    # 鲁棒标准化
     manual_scaler = RobustScaler()
     manual_scaler.fit(X_train_val)
 
@@ -374,7 +366,7 @@ def model_val(device,model_dir,independent_CNV_callset_feature,output_csv):
     loaded_model.eval()
 
     df = pd.read_csv(independent_CNV_callset_feature,index_col=0)
-    df.fillna(0, inplace=True)  # 用0填充缺失值
+    df.fillna(0, inplace=True)  
     s_df = df.drop(['svtype', 'report_len','valid_t_SR_percent_left_bp_interval','valid_t_SR_percent_right_bp_interval','valid_n_SR_percent_left_bp_interval','valid_n_SR_percent_right_bp_interval'], axis=1)
     test_feature = s_df.to_numpy()
     test_scaled = manual_scaler.transform(test_feature)

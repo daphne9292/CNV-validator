@@ -15,8 +15,6 @@ Linux-based systems required, including but are not limited to:
 ### Software and packages
 
 ```python
-GPU Driver Version  455.23.05 
-CUDA Version        11.1
 Python              3.9.0
 Snakemake           7.25.0
 pandas              1.5.1
@@ -32,7 +30,7 @@ For a given CNV callset, features can be extracted from the paired tumor–norma
 
 ### Feature extraction
 
-Because the B-allele frequency (BAF) of heterozygous SNPs are used in feature extraction, SNP calling must be performed on both normal and tumor samples firstly. In this work, SNP calling was carried out using VarScan. The detailed commands are provided in varscan.smk, and users are required to modify the corresponding config.yaml file in the config directory before running the pipeline. The usage of the .smk file is as follows:
+Because the B-allele frequency (BAF) deviation of heterozygous SNPs are used in feature extraction, SNP calling must be performed on both normal and tumor samples firstly. In this work, SNP calling was carried out using VarScan. The detailed commands are provided in varscan.smk, and users are required to modify the corresponding config.yaml file in the config directory before running the pipeline. The usage of the .smk file is as follows:
 
 ```snakemake
 nohup snakemake -s ./varscan.smk --cluster "qsub -l nodes=1:ppn=1 " -j 1 >sublog 2>&1 &
@@ -50,6 +48,7 @@ nohup snakemake -s ./varscan.smk --cluster "qsub -l nodes=1:ppn=1 " -j 1 >sublog
 --RD_dir            Path to store read-depth BAF related information
 --mean_insert_size  Mean insert size of tumor or normal BAM
 --std_insert_size   Standard deviation of insert size of tumor or normal BAM
+--expand_size       Expand size for RP feature extraction
 --snp_vcf_prefix    Prefix of SNP vcf called by Varscan (eg:"/xxx/xxx/HG002.ILM.varscan.")
 --thread_num        Num of thread using for extracting feature
 --output            Output CSV dir
@@ -77,12 +76,12 @@ feature extraction parameters
 --RD_dir                Path to store read-depth BAF related information
 --mean_insert_size      Mean insert size of tumor or normal BAM
 --std_insert_size       Standard deviation of insert size of tumor or normal BAM
+--expand_size           Expand size for RP feature extraction
 --snp_vcf_prefix        Prefix of SNP vcf called by Varscan (eg:"/xxx/xxx/HG002.ILM.varscan.")
 --thread_num            Num of thread using for extracting feature
 --output_feature        Output extrated feature, CSV format.
 
 validation parameters
---device                Devices using for model validation.eg:"cpu","gpu1".
 --model                 Path to model
 --output_model_predict  Output model validation result,CSV format.
 
@@ -91,22 +90,32 @@ validation parameters
 The detailed commands used is listed below.
 
 ```python
-python validator.py --tumor_bam --normal_bam --fasta --bed --sample_name --RP_dir --RD_dir --mean_insert_size --std_insert_size --snp_vcf_prefix --thread_num --output_feature --device --model --output_model_predict
+python validator.py --tumor_bam --normal_bam --fasta --bed --sample_name --RP_dir --RD_dir --mean_insert_size --std_insert_size --snp_vcf_prefix --thread_num --output_feature --model --output_model_predict
 ```
 
 #### Trained model
 
-We have trained a three-layer multilayer perceptron (MLP) using the both real and simulated data. The output layer contained three neurons corresponding to the three labels where the first label indicates whether the CNV call is a true event and the second and third label indicate whether the left and right breakpoints are correctly positioned.
-The model is placed in the directory 'model'.You can use the model directly to validate your CNV callset.
+We trained a CatBoost classifier using both simulated and real datasets. The model classifies CNV candidates into six categories. Class 0 represents regions without detectable CNV signals. Class 1 represents CNVs with accurately positioned left and right breakpoints. Classes 2 and 3 represent potential CNVs with accurately positioned left and right breakpoints, respectively. Class 4 represents intervals formed by combining breakpoints from two distinct events. Class 5 represents regions with potential loss of heterozygosity (LOH), but with both breakpoints inaccurately positioned.
+
+Users can select different prediction categories according to their analytical requirements. For applications requiring high-confidence CNVs with accurate intervals and breakpoints, only Class 1 predictions should be retained, although this may exclude some true CNV events. In contrast, when maximizing CNV recall is the priority, Classes 2 and 3 can also be considered to retain more potential CNV events.
+
+A pre-trained model is provided in the "model" directory.You can use the model directly to validate your CNV callset.
+
+#### Demo
+
+The `demo` directory provides a small example dataset in `demo/data/` and a test script, `demo/demo.test.sh`, to demonstrate feature extraction and CNV callset validation using the pre-trained model. Before running the demo, check the input paths and parameters in the script and ensure that the required dependencies are installed. Run the following command from the project root:
+
+```bash
+bash demo/demo.test.sh
+```
 
 ### CNV detection Software
 
  We list several widely used software for CNV detection.The callset of these tools were used for evaluation the performance of CNV-validator.Command-line parameters are listed below.
 
-FACETS
+#### FACETS
 
----
-linux
+Linux
 
 ```python
 snp-pileup -A -g -q 10 -Q 10 -r 5,5 -P 100 SNP.benchmark.vcf.gz output_pileup.csv.gz normal.bam tumor.bam
@@ -123,17 +132,14 @@ fit <- emcncf(y)
 write.table(fit$cncf, file = "facets_segments.txt", sep = "\t", quote = FALSE, row.names = FALSE)
 ```
 
-CNVkit
-
----
+#### CNVkit
 
 ```python
 cnvkit.py batch tumor.bam --normal normal.bam --method wgs --fasta ref.fasta --output-dir ./ -p 48 --access access.hg38.bed
 ```
 
-Suquenza
+#### Suquenza
 
----
 python
 
 ```python

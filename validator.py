@@ -1,28 +1,28 @@
 import argparse
-from ./src/extract_feature import generate_proof
-from ./src/mlp_training import model_val
+from src.extract_feature import generate_proof
+# Legacy joblib models refer to __main__.CNVCatBoost.
+from src.catboost_training import CNVCatBoost, model_val
 def main():
-    parser = argparse.ArgumentParser(description='Extract feature for training or evaluation')
+    parser = argparse.ArgumentParser(description='Catboost model evaluation')
     parser.add_argument('--tumor_bam', type=str, required=True, help='Path to tumor BAM')
     parser.add_argument('--normal_bam', type=str, required=True, help='Path to normal BAM')
-    parser.add_argument('--fasta', type=str, required=True,default='./model.pth', help='Path to reference genome')
-    parser.add_argument('--bed', type=str,required=True, default='./model.pth', help='Path to CNV bed,need four columns, "ch1\tstart\tend\tDUP\nchr1\tstart\tend\tDEL\n"')
-    parser.add_argument('--sample_name', required=True,type=str, default='./model.pth', help='Name of sample')
-    parser.add_argument('--RP_dir', type=str, required=True,default='./model.pth', help='Path to store read-pair split-read related information')
-    parser.add_argument('--RD_dir', type=str, required=True,default='./model.pth', help='Path to store read-depth BAF related information')
-    parser.add_argument('--mean_insert_size', type=int, required=True,default=500, help='Mean insert size of tumor or normal BAM')
-    parser.add_argument('--std_insert_size', type=int, required=True,default=50, help='Standard deviation of insert size of tumor or normal BAM')
-    parser.add_argument('--snp_vcf_prefix', type=str, required=True,default='./model.pth', help='Prefix of SNP vcf called by Varscan,"/xxx/xxx/HG002.ILM.varscan."')
-    parser.add_argument('--thread_num', type=int, required=True,default=1, help='Num of thread using for extracting feature')
-    parser.add_argument('--output_feature', type=str, required=True,default='./model.pth', help='Path to store feature extracted')
+    parser.add_argument('--fasta', type=str, required=True,default='', help='Path to reference genome')
+    parser.add_argument('--bed', type=str,required=True, default='', help='Path to CNV bed,need four columns, "ch1\tstart\tend\tDUP\nchr1\tstart\tend\tDEL\n"')
+    parser.add_argument('--sample_name', type=str, default='', help='Name of sample')
+    parser.add_argument('--RP_dir', type=str, required=True,default='', help='Path to store read-pair split-read related information')
+    parser.add_argument('--RD_dir', type=str, required=True,default='', help='Path to store read-depth BAF related information')
+    parser.add_argument('--mean_insert_size', type=int,default=413, help='Mean insert size of tumor or normal BAM')
+    parser.add_argument('--std_insert_size', type=int, default=106, help='Standard deviation of insert size of tumor or normal BAM')
+    parser.add_argument('--expand_size', type=int, default=500,help='Expand size for RP feature extraction')
+    parser.add_argument('--snp_vcf_prefix', type=str, required=True,default='', help='Prefix of SNP vcf called by Varscan,"/xxx/xxx/HG002.ILM.varscan."')
+    parser.add_argument('--thread_num', type=int, default=1, help='Num of thread using for extracting feature')
+    parser.add_argument('--output_feature', type=str, required=True,default='', help='Path to store feature extracted')
 
-    parser.add_argument('--device', type=str, required=True,default='./model.pth', help='d=Device using for CNV validator,"cpu"')
-    parser.add_argument('--model', type=int, required=True,default='./model/trained_model', help='Path to model used for predicting')
+    parser.add_argument('--model', type=str, required=True,default='./model/catboost_model.pkl', help='Path to model used for predicting')
     parser.add_argument('--output_model_predict', type=str, required=True, help='Path to store model predicted')
     args = parser.parse_args()
-    generate_proof(args.tumor_bam,args.normal_bam,args.fasta,args.bed,args.sample_name,args.RP_dir,args.RD_dir,args.mean_insert_size,args.std_insert_size,args.snp_vcf_prefix,args.thread,args.output_feature)
-
-    model_val(args.device,args.model,args.output_feature,args.output_model_predict)
+    generate_proof(args.tumor_bam,args.normal_bam,args.fasta,args.bed,args.sample_name,args.RP_dir,args.RD_dir,args.mean_insert_size,args.std_insert_size,args.expand_size,args.snp_vcf_prefix,args.thread_num,args.output_feature)
+    model_val(args.model,args.output_feature,args.output_model_predict)
 
 if __name__ == '__main__':
     main()

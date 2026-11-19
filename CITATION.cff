@@ -1,0 +1,7 @@
+cff-version: 1.2.0
+message: "If you use this workflow, please cite the Zenodo archive."
+title: "CNV-validator:a post hoc validation framework for somatic copy number variations"
+version: "1.0.0"
+date-released: "2026-11-19"
+doi: "10.5281/zenodo.24357539"
+url: "https://github.com/daphne9292/CNV-validator"

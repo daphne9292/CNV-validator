@@ -21,6 +21,11 @@ pandas              1.5.1
 sklearn             1.2.1
 scipy               1.7.3
 ```
+## Citation
+This analysis pipeline is archived on Zenodo.
+Archive DOI: https://doi.org/10.5281/zenodo.24357539.
+
+GitHub development repository: https://github.com/daphne9292/CNV-validator.
 
 
 ## Usage
